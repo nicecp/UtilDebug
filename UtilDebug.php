@@ -130,11 +130,13 @@ class UtilDebug {
      */
     private static function getLog()
     {
-        if (!in_array(ini_get("display_errors"), array("On","1"))) {
+        if (!in_array(ini_get("display_errors"), array("On","true","1"))) {
             return false;
         }
 
-        self::$error_log = dirname(ini_get("error_log")) . "/" . self::$error_log;
+        if (!is_file(self::$error_log)) {
+            self::$error_log = dirname(ini_get("error_log")) . "/" . self::$error_log;
+        }
         return true;
     }
 
@@ -166,17 +168,9 @@ class UtilDebug {
      */
     private static function getTrace($exp)
     {
-        if (is_null($exp)) {
-            $back_trace = debug_backtrace();
-            array_shift($back_trace);
-            array_shift($back_trace);
-            $trace = $back_trace;
-        } else {
-            $trace = $exp->getTrace();
-        }
-
-        return $trace;
+        return !is_null($exp) ? $exp->getTrace() : array_slice(debug_backtrace(), 2);
     }
+
     /**
      * 将每一条调用栈转换成字符串
      *
