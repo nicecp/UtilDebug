@@ -1,0 +1,36 @@
+{
+    "name": "nicecp/utildebug",
+    "type": "library",
+    "keywords": [
+        "util",
+        "debug",
+        "trigger error",
+        "error log"
+    ],
+    "homepage": "http://www.iyov.io",
+    "license": "MIT",
+    "description": "开发者在业务上主动触发用户级别的错误",
+    "authors": [
+        {
+            "name": "nicecp",
+            "email": "forward.nice.cp@gmail.com",
+            "homepage": "http://www.iyov.io",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "forward.nice.cp@gmail.com",
+        "issues": "https://github.com/nicecp/Bootstrap/issues",
+        "wiki": "https://github.com/nicecp/Bootstrap/",
+        "source": "https://github.com/nicecp/Bootstrap/"
+    },
+    "require": {
+        "php": ">=5.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "UtilDebug\\": "./"
+        }
+    },
+    "minimum-stability": "dev"
+}
