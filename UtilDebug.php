@@ -13,19 +13,19 @@ class UtilDebug {
 
     /**
      * E_USER_NOTICE
-     * @var int
+     * @var string
      */
     const DEBUG_NOTICE = '[ notice ]';
 
     /**
      * E_USER_WARNING
-     * @var int
+     * @var string
      */
     const DEBUG_WARNING = '[ warning ]';
 
     /**
      * E_USER_ERROR
-     * @var int
+     * @var string
      */
     const DEBUG_ERROR = '[ error ]';
 
