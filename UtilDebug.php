@@ -57,7 +57,7 @@ class UtilDebug {
      */
     public static function config($log = "")
     {
-        if (strlen($log)) {
+        if (!strlen($log)) {
             return ;
         }
 
