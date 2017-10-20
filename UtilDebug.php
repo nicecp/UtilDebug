@@ -93,13 +93,13 @@ class UtilDebug {
 
     /**
      * @param $error
-     * @throws Exception
+     * @throws \Exception
      */
     protected static function writeLog($error)
     {
         $path = dirname(self::$error_log);
         if (!is_dir($path) || !is_writable($path)) {
-            throw new Exception("{$path} isn`t writable");
+            throw new \Exception("{$path} isn`t writable");
         }
         // 旧日志归档
         self::reNameLog();
@@ -163,7 +163,7 @@ class UtilDebug {
     }
 
     /**
-     * @param Exception|null $exp
+     * @param \Exception|null $exp
      * @return array
      */
     private static function getTrace($exp)
