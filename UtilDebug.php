@@ -35,17 +35,17 @@ class UtilDebug {
      */
     private static $error_log = 'php_user_level_error.log';
 
-    public static function notice($msg = "", Exception $exp = null)
+    public static function notice($msg = "", \Exception $exp = null)
     {
         self::triggerError(self::DEBUG_NOTICE, $msg, $exp);
     }
 
-    public static function warning($msg = "", Exception $exp = null)
+    public static function warning($msg = "", \Exception $exp = null)
     {
         self::triggerError(self::DEBUG_WARNING, $msg, $exp);
     }
 
-    public static function error($msg = "", Exception $exp = null)
+    public static function error($msg = "", \Exception $exp = null)
     {
         self::triggerError(self::DEBUG_ERROR, $msg, $exp);
     }
@@ -70,7 +70,7 @@ class UtilDebug {
      * @param $msg
      * @param $exp
      */
-    protected static function triggerError($level, $msg, $exp)
+    protected static function triggerError($level, $msg, \Exception $exp)
     {
         if (!self::getLog()) {
             return ;
@@ -143,10 +143,10 @@ class UtilDebug {
     /**
      * 调用栈
      *
-     * @param array $exp
+     * @param \Exception $exp
      * @return array
      */
-    public static function stackTrace($msg, $exp = null)
+    public static function stackTrace($msg,\Exception $exp = null)
     {
 
         $trace = self::getTrace($exp);
