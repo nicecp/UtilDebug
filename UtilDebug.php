@@ -1,5 +1,5 @@
 <?php
-
+namespace UtilDebug;
 /**
  * Class UtilDebug
  * 不同于PHP错误日志,此为用户级别错误,日志文件与fpm分开
