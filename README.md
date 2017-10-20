@@ -16,6 +16,9 @@ error_log = /tmp/fpm.error.log  // 路径
 
 ```php
 <?php
+  // Config file name
+  UtilDebug::config('app.log');
+
   // Notice
   UtilDebug::notice("message");
   UtilDebug::notice("message", new \Exception("Notice"));
