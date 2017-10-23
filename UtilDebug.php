@@ -130,7 +130,7 @@ class UtilDebug {
      */
     private static function getLog()
     {
-        if (!in_array(ini_get("display_errors"), array("On","true","1"))) {
+        if (!in_array(strtoupper(ini_get("display_errors")), array("ON","TRUE","1","STDOUT"))) {
             return false;
         }
 
