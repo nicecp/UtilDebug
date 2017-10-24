@@ -16,7 +16,7 @@ error_log = /tmp/fpm.error.log  // 路径
 
 ```php
 <?php
-  // 只使用于DAEMON进程,或者未重置请求上下文时有效
+  // 只适用于DAEMON进程,或者未重置请求上下文时有效
   \UtilDebug\UtilDebug::getLastError();
   
   // Config file name
