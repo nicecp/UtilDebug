@@ -16,20 +16,23 @@ error_log = /tmp/fpm.error.log  // 路径
 
 ```php
 <?php
+  // 只使用于DAEMON进程,或者未重置请求上下文时有效
+  \UtilDebug\UtilDebug::getLastError();
+  
   // Config file name
-  UtilDebug::config('app.log');
+  \UtilDebug\UtilDebug::config('app.log');
 
   // Notice
-  UtilDebug::notice("message");
-  UtilDebug::notice("message", new \Exception("Notice"));
+  \UtilDebug\UtilDebug::notice("message");
+  \UtilDebug\UtilDebug::notice("message", new \Exception("Notice"));
 
   // Warning
-  UtilDebug::warning("message");
-  UtilDebug::warning("message", new \Exception("Warning"));
+  \UtilDebug\UtilDebug::warning("message");
+  \UtilDebug\UtilDebug::warning("message", new \Exception("Warning"));
 
   // Error
-  UtilDebug::error("message");
-  UtilDebug::error("message", new \Exception("Error"));
+  \UtilDebug\UtilDebug::error("message");
+  \UtilDebug\UtilDebug::error("message", new \Exception("Error"));
 ```
 
 
