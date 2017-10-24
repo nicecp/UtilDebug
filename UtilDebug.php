@@ -29,6 +29,12 @@ class UtilDebug {
      */
     const DEBUG_ERROR = '[ error ]';
 
+    /**
+     * 最后一条错误信息
+     * @var string
+     */
+    private static $lastError = 'none';
+
     /*
      * 日志路径
      * @var string
@@ -88,7 +94,8 @@ class UtilDebug {
         $message = sprintf("[%s] %s %s", date("d/m/Y H:i:s"), $level, array_shift($error));
         $stack_trace = implode("\n", $error);
 
-        self::writeLog("{$message}\n{$stack_trace}\n");
+        self::$lastError = "{$message}\n{$stack_trace}\n";
+        self::writeLog(self::$lastError);
     }
 
     /**
@@ -138,6 +145,11 @@ class UtilDebug {
             self::$error_log = dirname(ini_get("error_log")) . "/" . self::$error_log;
         }
         return true;
+    }
+
+    public static function getLastError()
+    {
+        return self::$lastError;
     }
 
     /**
