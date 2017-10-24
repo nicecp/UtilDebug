@@ -117,10 +117,10 @@ class UtilDebug {
             return ;
         }
         $new_name = dirname(self::$error_log)
-                    .'/'
-                    . basename(self::$error_log, '.log')
-                    . date('Ymd', strtotime("-1 day"))
-                    . '.log';
+            .'/'
+            . basename(self::$error_log, '.log')
+            . date('Ymd', strtotime("-1 day"))
+            . '.log';
         rename(self::$error_log, $new_name);
     }
 
@@ -180,10 +180,12 @@ class UtilDebug {
     private static function getStraceString($line)
     {
         $str =  sprintf(
-            "%s(%s):%s",
-            isset($line['file']) ? $line['file'] : "[internal function]",
-            isset($line['line']) ? $line['line'] : '',
-            "{$line['class']}{$line['type']}{$line['function']}"
+            "%s(%s):%s%s%s",
+            isset($line['file'])  ? $line['file']  : "[internal function]",
+            isset($line['line'])  ? $line['line']  : '',
+            isset($line['class']) ? $line['class'] : '',
+            isset($line['type'])  ? $line['type']  : '',
+            $line['function']
         );
 
         if (empty($line['args'])) {
@@ -199,8 +201,14 @@ class UtilDebug {
                 case 'object':
                     $param .= get_class($item) . "', '";
                     break;
-                default:
+                case 'integer':
                     $param .= "{$item}', '";
+                    break;
+                case 'resource':
+                    $param .= "{$item}', '";
+                    break;
+                default:
+                    $param = $param . (strlen($item) <= 50 ? $item : substr($item, 0, 50)."...") . "', '";
                     break;
             }
         });
