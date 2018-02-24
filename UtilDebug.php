@@ -1,5 +1,6 @@
 <?php
 namespace UtilDebug;
+use Workerman\Worker;
 /**
  * Class UtilDebug
  * 不同于PHP错误日志,此为用户级别错误,日志文件与fpm分开
@@ -12,22 +13,27 @@ namespace UtilDebug;
 class UtilDebug {
 
     /**
+     * E_USER_MESSAGE
+     * @var string
+     */
+    const DEBUG_MESSAGE = '[ MESSAGE ]';
+    /**
      * E_USER_NOTICE
      * @var string
      */
-    const DEBUG_NOTICE = '[ notice ]';
+    const DEBUG_NOTICE = '[ NOTICE ]';
 
     /**
      * E_USER_WARNING
      * @var string
      */
-    const DEBUG_WARNING = '[ warning ]';
+    const DEBUG_WARNING = '[ WARNING ]';
 
     /**
      * E_USER_ERROR
      * @var string
      */
-    const DEBUG_ERROR = '[ error ]';
+    const DEBUG_ERROR = '[ ERROR ]';
 
     /**
      * 最后一条错误信息
@@ -35,25 +41,64 @@ class UtilDebug {
      */
     private static $lastError = 'none';
 
+    /**
+     * 是否使用PHP系统日志
+     * @var bool
+     */
+    private static $sysLogSwitch = true;
+
+    /**
+     * 进程号
+     * @var int
+     */
+    private static $pid = "";
+
     /*
      * 日志路径
      * @var string
      */
-    private static $error_log = 'php_user_level_error.log';
+    private static $errorLog = array(
+        'success' => 'success.log',
+        'error'   => 'error.log'
+    );
 
-    public static function notice($msg = "", \Exception $exp = null)
+    /**
+     * @param string $msg 记录信息
+     * @param string $oob 额外储存的数据
+     */
+    public static function message($msg = "", $oob = "")
     {
-        self::triggerError(self::DEBUG_NOTICE, $msg, $exp);
+        self::triggerMessage(self::DEBUG_MESSAGE, $msg, $oob);
     }
 
-    public static function warning($msg = "", \Exception $exp = null)
+    /**
+     * @param string $msg
+     * @param string $oob
+     * @param \Exception|null $exp
+     */
+    public static function notice($msg = "", $oob = "", \Exception $exp = null)
     {
-        self::triggerError(self::DEBUG_WARNING, $msg, $exp);
+        self::triggerError(self::DEBUG_NOTICE, $msg, $oob, $exp);
     }
 
-    public static function error($msg = "", \Exception $exp = null)
+    /**
+     * @param string $msg
+     * @param string $oob
+     * @param \Exception|null $exp
+     */
+    public static function warning($msg = "", $oob = "", \Exception $exp = null)
     {
-        self::triggerError(self::DEBUG_ERROR, $msg, $exp);
+        self::triggerError(self::DEBUG_WARNING, $msg, $oob, $exp);
+    }
+
+    /**
+     * @param string $msg
+     * @param string $oob
+     * @param \Exception|null $exp
+     */
+    public static function error($msg = "", $oob = "", \Exception $exp = null)
+    {
+        self::triggerError(self::DEBUG_ERROR, $msg, $oob, $exp);
     }
 
     /**
@@ -61,13 +106,25 @@ class UtilDebug {
      *
      * @param string $log
      */
-    public static function config($log = "")
+    public static function config($type = "", $log = "")
     {
-        if (!strlen($log)) {
-            return ;
+        if (!strlen($log) || !strlen($type)) {
+            throw new \Exception("Log conf should not be empty either.");
         }
 
-        self::$error_log = $log;
+        self::$errorLog[$type] = $log;
+    }
+
+    public static function triggerMessage($level, $message, $oob)
+    {
+        $message  = $message . ' with out-of-band ' . $oob;
+        self::messageLog($level, $message);
+    }
+
+    protected static function messageLog($level, $message)
+    {
+        $message = is_array($message) ? $message : array($message);
+        self::writeLog(self::format($level, $message), self::getLog('success'));
     }
 
     /**
@@ -76,75 +133,106 @@ class UtilDebug {
      * @param $msg
      * @param $exp
      */
-    protected static function triggerError($level, $msg, \Exception $exp)
+    protected static function triggerError($level, $msg, $oob, \Exception $exp)
     {
-        if (!self::getLog()) {
-            return ;
-        }
-        $msg = is_null($exp) ? $msg : sprintf("%s (%s: %s)", $msg, get_class($exp) ,$exp->getMessage());
+        $msg = is_null($exp) ? $msg : sprintf("%s in %s on line %d", $exp->getMessage(), $exp->getFile(), $exp->getLine());
+        $msg = $msg . ' with out-of-band ' . $oob;
         self::errorLog($level, self::stackTrace($msg, $exp));
     }
-
     /**
      * @param $level
      * @param array $error
      */
     protected static function errorLog($level, Array $error)
     {
-        $message = sprintf("[%s] %s %s", date("d/m/Y H:i:s"), $level, array_shift($error));
-        $stack_trace = implode("\n", $error);
-
-        self::$lastError = "{$message}\n{$stack_trace}\n";
-        self::writeLog(self::$lastError);
+        self::$lastError = self::format($level, $error);
+        self::writeLog(self::$lastError,  self::getLog('error'));
     }
 
+    /**
+     * 格式化日志
+     * @param $level
+     * @param $error
+     * @return string
+     */
+    private static function format($level, $error)
+    {
+        $prefix = sprintf("[%s %d]", date('Y-m-d H:i:s'), self::getCurrentPid());
+        $message = sprintf("%s %s %s", $prefix, $level, array_shift($error));
+        $errorStack = array_combine(array_keys($error), array_map(function($log) use ($prefix) {
+            return $prefix . $log;
+        }, $error));
+
+        return $message . "\n" . (empty($error) ? "" : implode("\n", $errorStack) . "\n");
+    }
     /**
      * @param $error
      * @throws \Exception
      */
-    protected static function writeLog($error)
+    protected static function writeLog($error, $logFile)
     {
-        $path = dirname(self::$error_log);
+        $path = dirname($logFile);
         if (!is_dir($path) || !is_writable($path)) {
-            throw new \Exception("{$path} isn`t writable");
+            throw new \Exception("{$path} isn`t writable or not exist.");
         }
         // 旧日志归档
-        self::reNameLog();
-        @file_put_contents(self::$error_log, $error, FILE_APPEND | LOCK_EX);
-
+        self::reNameLog($logFile);
+        file_put_contents($logFile, $error, FILE_APPEND | LOCK_EX);
+        if (!Worker::$daemonize) {
+            echo $error;
+        }
     }
 
     /**
      * 归档前一天日志
      */
-    private static function reNameLog()
+    private static function reNameLog($logFile)
     {
-        $mod_time = filemtime(self::$error_log);
+        if (!file_exists($logFile)) {
+            return ;
+        }
+        $mod_time = filemtime($logFile);
         if (!$mod_time || $mod_time > strtotime(date('Y-m-d'))) {
             return ;
         }
-        $new_name = dirname(self::$error_log)
-            .'/'
-            . basename(self::$error_log, '.log')
-            . date('Ymd', strtotime("-1 day"))
-            . '.log';
-        rename(self::$error_log, $new_name);
+        $new_name = dirname($logFile)
+                    .'/'
+                    . basename($logFile, '.log')
+                    . date('Ymd', strtotime("-1 day"))
+                    . '.log';
+        rename($logFile, $new_name);
     }
 
     /**
-     * 是否开启日志
-     * @return bool
+     * 获取当前进程号
+     * @return int
      */
-    private static function getLog()
+    private static function getCurrentPid()
     {
-        if (!in_array(strtoupper(ini_get("display_errors")), array("ON","TRUE","1","STDOUT"))) {
-            return false;
+        if (self::$pid <= 0) {
+            self::$pid = posix_getpid();
+        }
+        return self::$pid;
+    }
+
+    public static function setSysLog($switch)
+    {
+        if (!is_bool($switch)) {
+            throw new \Exception("Param should be bool.");
         }
 
-        if (!is_file(self::$error_log)) {
-            self::$error_log = dirname(ini_get("error_log")) . "/" . self::$error_log;
+        self::$sysLogSwitch = $switch;
+    }
+    /**
+     * 获取日志路径
+     * @return bool
+     */
+    private static function getLog($type)
+    {
+        if (!self::$sysLogSwitch || !strcmp($type, 'error') === 0) {
+            return self::$errorLog[$type];
         }
-        return true;
+        return ini_get("error_log");
     }
 
     public static function getLastError()
@@ -162,10 +250,6 @@ class UtilDebug {
     {
 
         $trace = self::getTrace($exp);
-        if (isset($trace[0]['file'])) {
-            $msg .= " in {$trace[0]['file']}: {$trace[0]['line']}";
-        }
-
         $debug = array($msg, "Stack trace:");
         array_walk($trace, function ($line, $key) use (&$debug) {
             $debug[] = "#{$key} " . self::getStraceString($line);
@@ -205,7 +289,7 @@ class UtilDebug {
         }
 
         $param = "('";
-        array_walk($line['args'], function ($item, $key) use (&$param) {
+        array_walk($line['args'], function ($item, $ignore) use (&$param) {
             switch (gettype($item)) {
                 case 'array':
                     $param .= "Array', '";
@@ -228,3 +312,4 @@ class UtilDebug {
         return $str . substr($param, 0, -3) . ')';
     }
 }
+
