@@ -135,8 +135,8 @@ class UtilDebug {
      */
     protected static function triggerError($level, $msg, $oob, \Exception $exp = null)
     {
-        $msg = is_null($exp) ? $msg : sprintf("%s in %s on line %d", $exp->getMessage(), $exp->getFile(), $exp->getLine());
-        $msg = $msg . ' with out-of-band ' . $oob;
+	$message = is_null($exp) ? '' : sprintf("%s in %s on line %d", $exp->getMessage(), $exp->getFile(), $exp->getLine());
+        $msg = "{$msg} {$message} with out-of-band {$oob}";
         self::errorLog($level, self::stackTrace($msg, $exp));
     }
     /**
