@@ -300,6 +300,7 @@ class UtilDebug {
                 case 'integer':
                     $param .= "{$item}', '";
                     break;
+		case 'resource (closed)':
                 case 'resource':
                     $param .= "{$item}', '";
                     break;
